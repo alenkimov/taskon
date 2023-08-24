@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "taskon"
+version = "0.1.0"
+description = ""
+authors = ["Alen <alen.kimov@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+questionary = "^2.0.0"
+tqdm = "^4.66.1"
+loguru = "^0.7.0"
+pydantic = "^2.2.1"
+better-web3 = "^3.0.2"
+better-automation = "^0.2.3"
+better-proxy = "^0.2.0"
+pandas = "^2.0.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
