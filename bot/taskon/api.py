@@ -20,7 +20,7 @@ DISCORD_BIND_INFO = {
     'client_id': '986938000388796468',
     'response_type': 'code',
     'scope': 'identify guilds guilds.members.read',
-    'redirect_uri': 'https://taskon.xyz/discord',
+    # 'redirect_uri': 'https://taskon.xyz/discord',
 }
 
 
@@ -150,28 +150,44 @@ class TaskonAPI(BetterHTTPClient):
     # Twitter binding
 
     @check_auth_token
-    async def request_twitter_auth_state(self) -> str:
+    async def request_twitter_bind_state(self) -> str:
         url = 'https://api.taskon.xyz/v1/requestTwitterAuthState'
         response = await self.request('POST', url)
         return await self.handle_response(response)
 
+    # @check_auth_token
+    # async def _get_twitter_auth_state(self, state: str, bind_code: str) -> bool:
+    #     url = "https://api.taskon.xyz/v1/getTwitterAuthState"
+    #     payload = {
+    #         "state": state,
+    #         "token": bind_code,
+    #     }
+    #     response = await self.request('POST', url, json=payload)
+    #     result = await self.handle_response(response)
+    #     return result['auth_state']
+
+    # @check_auth_token
+    # async def request_bind_code_by_state(self, state: str) -> str:
+    #     url = "https://api.taskon.xyz/v1/getTokenByState"
+    #     payload = {
+    #         "state": state,
+    #     }
+    #     response = await self.request('POST', url, json=payload)
+    #     result = await self.handle_response(response)
+    #     return result['result']
+
     @check_auth_token
-    async def bind_twitter(self, state: str, bind_code: str) -> bool:
-        url = "https://api.taskon.xyz/v1/getTwitterAuthState"
+    async def bind_app(self, type: str, bind_code: str):
+        url = "https://api.taskon.xyz/v1/bindSNS"
         payload = {
-            "state": state,
+            "sns_type": type,
             "token": bind_code,
         }
         response = await self.request('POST', url, json=payload)
-        result = await self.handle_response(response)
-        return result['auth_state']
+        await self.handle_response(response)
 
-    @check_auth_token
-    async def request_bind_code_by_state(self, state: str) -> str:
-        url = "https://api.taskon.xyz/v1/getTokenByState"
-        payload = {
-            "state": state,
-        }
-        response = await self.request('POST', url, json=payload)
-        result = await self.handle_response(response)
-        return result['result']
+    async def bind_twitter(self, bind_code: str):
+        await self.bind_app("Twitter", bind_code)
+
+    async def bind_discord(self, bind_code: str):
+        await self.bind_app("Discord", bind_code)

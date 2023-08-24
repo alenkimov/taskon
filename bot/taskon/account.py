@@ -29,7 +29,7 @@ class TaskonAccount:
     proxy: Proxy | None
     invite_code: int | None
     user_info: UserInfo | None
-    auth_tokens: dict[str: str]  # {service_name: auth_token}
+    auth_tokens: dict[str: str]  # {app_name: auth_token}
 
     def __init__(
             self,
