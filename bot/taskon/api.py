@@ -144,10 +144,7 @@ class TaskonAPI(BetterHTTPClient):
             "pre_submit": pre_submit
         }
         response = await self.request('POST', url, json=payload)
-        result = await self.handle_response(response)
-        return result['result']
-
-    # Twitter binding
+        return await self.handle_response(response)
 
     @check_auth_token
     async def request_twitter_bind_state(self) -> str:
@@ -155,32 +152,11 @@ class TaskonAPI(BetterHTTPClient):
         response = await self.request('POST', url)
         return await self.handle_response(response)
 
-    # @check_auth_token
-    # async def _get_twitter_auth_state(self, state: str, bind_code: str) -> bool:
-    #     url = "https://api.taskon.xyz/v1/getTwitterAuthState"
-    #     payload = {
-    #         "state": state,
-    #         "token": bind_code,
-    #     }
-    #     response = await self.request('POST', url, json=payload)
-    #     result = await self.handle_response(response)
-    #     return result['auth_state']
-
-    # @check_auth_token
-    # async def request_bind_code_by_state(self, state: str) -> str:
-    #     url = "https://api.taskon.xyz/v1/getTokenByState"
-    #     payload = {
-    #         "state": state,
-    #     }
-    #     response = await self.request('POST', url, json=payload)
-    #     result = await self.handle_response(response)
-    #     return result['result']
-
     @check_auth_token
-    async def bind_app(self, type: str, bind_code: str):
+    async def bind_app(self, app_type: str, bind_code: str):
         url = "https://api.taskon.xyz/v1/bindSNS"
         payload = {
-            "sns_type": type,
+            "sns_type": app_type,
             "token": bind_code,
         }
         response = await self.request('POST', url, json=payload)

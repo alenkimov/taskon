@@ -12,7 +12,7 @@ from .helpers import process_accounts_with_session
 from .user import _request_and_set_user_info
 
 
-def bind_app_decorator(bind_fn):
+def bind_app(bind_fn):
     @wraps(bind_fn)
     async def wrapper(session: aiohttp.ClientSession, account: TaskonAccount):
         async with authenticated_taskon(session, account) as taskon:
@@ -28,6 +28,9 @@ def tokens_are_present(app_name):
     def decorator(func):
         async def wrapper(*args, **kwargs):
             accounts: Iterable[TaskonAccount] = args[0]
+            if not accounts:
+                return
+
             filtered_accounts = [account for account in accounts if app_name in account.auth_tokens]
 
             if not filtered_accounts:
@@ -41,7 +44,7 @@ def tokens_are_present(app_name):
     return decorator
 
 
-@bind_app_decorator
+@bind_app
 async def bind_discord(session: aiohttp.ClientSession, taskon: TaskonAPI, account: TaskonAccount):
     if account.discord_username:
         logger.info(f"{account} Discord is already binded: @{account.discord_username}")
@@ -92,7 +95,7 @@ async def bind_discords(accounts: Iterable[TaskonAccount]):
     await process_accounts_with_session(accounts, bind_discord)
 
 
-@bind_app_decorator
+@bind_app
 async def bind_twitter(session: aiohttp.ClientSession, taskon: TaskonAPI, account: TaskonAccount):
     if account.twitter_username:
         logger.info(f"{account} Twitter is already binded: @{account.twitter_username}")
@@ -103,8 +106,12 @@ async def bind_twitter(session: aiohttp.ClientSession, taskon: TaskonAPI, accoun
         return
 
     state = await taskon.request_twitter_bind_state()
+
     twitter = TwitterAPI(session, auth_token=account.auth_tokens["twitter"], useragent=account.useragent)
+    if "twitter_ct0" in account.auth_tokens:
+        twitter.set_ct0(account.auth_tokens["twitter_ct0"])
     bind_code = await twitter.bind_app(**TWITTER_BIND_INFO, state=state)
+    account.auth_tokens["twitter_ct0"] = twitter.ct0
     await taskon.bind_twitter(bind_code)
     await _request_and_set_user_info(taskon, account)
     logger.success(f"{account} Twitter binded: @{account.twitter_username}")

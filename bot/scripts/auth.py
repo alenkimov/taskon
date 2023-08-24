@@ -2,6 +2,7 @@ import time
 from contextlib import asynccontextmanager
 
 import aiohttp
+from better_automation import TwitterAPI
 from better_automation.utils import to_json
 
 from bot.taskon import TaskonAPI, TaskonAccount
@@ -33,3 +34,12 @@ async def authenticated_taskon(session: aiohttp.ClientSession, account: TaskonAc
     taskon = TaskonAPI(session, useragent=account.useragent if account else None)
     if account: await auth_taskon(taskon, account)
     yield taskon
+
+
+@asynccontextmanager
+async def authenticated_twitter(session: aiohttp.ClientSession, account: TaskonAccount) -> TwitterAPI:
+    twitter = TwitterAPI(session, auth_token=account.auth_tokens["twitter"], useragent=account.useragent)
+    if "twitter_ct0" in account.auth_tokens:
+        twitter.set_ct0(account.auth_tokens["twitter_ct0"])
+    yield twitter
+    account.auth_tokens["twitter_ct0"] = twitter.ct0

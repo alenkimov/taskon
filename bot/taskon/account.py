@@ -18,6 +18,7 @@ TABLE_COLUMNS = [
     "(optional) Invite code",
     "(optional) Discord token",
     "(optional) Twitter token",
+    "(auto) Twitter ct0",
     "(auto) Site token",
     "(auto) Discord username",
     "(auto) Twitter username",
@@ -85,7 +86,8 @@ class TaskonAccount:
     def save_to_csv(self):
         df = pd.read_csv(self.csv_filepath)
         new_data = {
-            "(auto) Site token": self.auth_tokens.get("tabi"),
+            "(auto) Twitter ct0": self.auth_tokens.get("twitter_ct0"),
+            "(auto) Site token": self.auth_tokens.get("taskon"),
             "(auto) Discord username": self.discord_username,
             "(auto) Twitter username": self.twitter_username,
         }
@@ -132,6 +134,10 @@ class TaskonAccount:
             twitter_token = row.get("(optional) Twitter token")
             if twitter_token:
                 account.auth_tokens["twitter"] = twitter_token
+
+            ct0 = row.get("(auto) Twitter ct0")
+            if ct0:
+                account.auth_tokens["twitter_ct0"] = ct0
 
             site_auth_token = row.get("(auto) Site token")
             if site_auth_token:
