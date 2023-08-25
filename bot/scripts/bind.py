@@ -10,6 +10,7 @@ from bot.taskon import TaskonAccount, TaskonAPI
 from .auth import authenticated_taskon
 from .helpers import process_accounts_with_session
 from .user import _request_and_set_user_info
+from .helpers import filter_tokens
 
 
 def bind_app(bind_fn):
@@ -22,26 +23,6 @@ def bind_app(bind_fn):
             account.save_to_csv()
 
     return wrapper
-
-
-def tokens_are_present(app_name):
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
-            accounts: Iterable[TaskonAccount] = args[0]
-            if not accounts:
-                return
-
-            filtered_accounts = [account for account in accounts if app_name in account.auth_tokens]
-
-            if not filtered_accounts:
-                logger.warning(f"No accounts with {app_name} authentication token")
-                return
-
-            return await func(filtered_accounts, *args[1:], **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 @bind_app
@@ -90,7 +71,7 @@ def discords_are_not_binded(func):
 
 
 @discords_are_not_binded
-@tokens_are_present('discord')
+@filter_tokens('discord', presence=True)
 async def bind_discords(accounts: Iterable[TaskonAccount]):
     await process_accounts_with_session(accounts, bind_discord)
 
@@ -146,6 +127,6 @@ def twitters_are_not_binded(func):
 
 
 @twitters_are_not_binded
-@tokens_are_present('twitter')
+@filter_tokens('twitter', presence=True)
 async def bind_twitters(accounts: Iterable[TaskonAccount]):
     await process_accounts_with_session(accounts, bind_twitter)

@@ -146,6 +146,16 @@ class TaskonAPI(BetterHTTPClient):
         response = await self.request('POST', url, json=payload)
         return await self.handle_response(response)
 
+    async def submit_campaign(self, campaign_id: int, g_captcha_response: str = None) -> bool:
+        url = "https://api.taskon.xyz/v1/submitCampaign"
+        payload = {
+            "campaign_id": campaign_id,
+            "auto_follow_owner": False
+        }
+        if g_captcha_response: payload["google_recaptcha"] = g_captcha_response
+        response = await self.request('POST', url, json=payload)
+        return await self.handle_response(response)
+
     @check_auth_token
     async def request_twitter_bind_state(self) -> str:
         url = 'https://api.taskon.xyz/v1/requestTwitterAuthState'

@@ -11,6 +11,31 @@ from bot.logger import logger, LoggingLevel
 from bot.taskon import TaskonAccount
 
 
+def filter_tokens(app_name, *, presence: bool):
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            accounts: Iterable[TaskonAccount] = args[0]
+            if not accounts:
+                return
+
+            if presence:
+                filtered_accounts = [account for account in accounts if app_name in account.auth_tokens]
+                log_message = f"No accounts with {app_name} authentication token"
+            else:
+                filtered_accounts = [account for account in accounts if app_name not in account.auth_tokens]
+                log_message = f"All accounts have {app_name} authentication token"
+
+            if not filtered_accounts:
+                logger.warning(log_message)
+                return
+
+            return await func(filtered_accounts, *args[1:], **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 async def sleep(account, seconds: int, logging_level: LoggingLevel = "DEBUG"):
     if seconds <= 0:
         return

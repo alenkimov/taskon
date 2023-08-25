@@ -14,6 +14,7 @@ copy_file(DEFAULT_CONFIG_TOML, CONFIG_TOML)
 class Config(BaseModel):
     LOGGING_LEVEL: LoggingLevel = "INFO"
     DEFAULT_INVITE_CODE: str
+    ANTICAPTCHA_API_KEY: str
     MAX_DELAY: int = 0
     MAX_TASKS: int = 100
     IGNORE_ERRORS: bool = True

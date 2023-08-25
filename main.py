@@ -7,6 +7,7 @@ from bot.author import TG_LINK
 from bot.input import select_accounts_csv
 from bot.logger import logger
 from bot.scripts.bind import bind_discords, bind_twitters
+from bot.scripts.auth import auth_taskon_accounts
 from bot.scripts.campaign import enter_campaign
 from bot.taskon.account import TaskonAccount
 
@@ -20,6 +21,7 @@ async def main():
         return
 
     modules = {
+        'Auth and Invite': auth_taskon_accounts,
         'Bind Discords': bind_discords,
         'Bind Twitters': bind_twitters,
         'Enter campaign': enter_campaign,

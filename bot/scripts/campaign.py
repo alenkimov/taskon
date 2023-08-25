@@ -13,6 +13,10 @@ from better_automation.utils import curry_async
 from .helpers import process_accounts_with_session
 from bot.questions import ask_int
 from .task import TEMPLATE_ID_TO_TASK_SOLVER
+from bot.anticaptcha import solve_recaptcha_v2
+
+
+SITE_KEY = "6LceulwgAAAAANtqJ7oIASNtNhTa2qMz-2z_m6VJ"
 
 
 async def _request_campaign_info(
@@ -81,6 +85,21 @@ async def _enter_campaign_by_account(
             else:
                 logger.info(f"{log_message} Task is already completed")
 
+        user_campaign_status = await _request_user_campaign_status(
+            taskon, account, campaign_id, logging_level="DEBUG")
+        if all((user_task_status.is_submitter for user_task_status
+                in user_campaign_status.task_status_details)):
+            g_captcha_response = None
+            if campaign_info.recaptcha:
+                url = f'https://taskon.xyz/campaign/detail/{campaign_id}'
+                g_captcha_response = await solve_recaptcha_v2(account, url, SITE_KEY)
+            campaign_is_submitted = await taskon.submit_campaign(campaign_id, g_captcha_response)
+            if campaign_is_submitted:
+                logger.success(f"{account} (campaign_id={campaign_id}) Campaign submited!")
+            else:
+                logger.warning(f"{account} (campaign_id={campaign_id}) Failed to submit campaign."
+                               f"Some of tasks aren't completed")
+            return campaign_is_submitted
 
 @discords_are_binded
 @twitters_are_binded
