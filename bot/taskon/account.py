@@ -1,5 +1,6 @@
 from functools import cached_property
 from pathlib import Path
+from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -11,7 +12,6 @@ from bot.config import CONFIG
 from bot.logger import logger
 from .models import UserInfo
 
-
 TABLE_COLUMNS = [
     "(required) Proxy",
     "(required) Private key",
@@ -22,13 +22,14 @@ TABLE_COLUMNS = [
     "(auto) Site token",
     "(auto) Discord username",
     "(auto) Twitter username",
+    "(auto) Invite code",
 ]
 
 
 class TaskonAccount:
     wallet: Wallet
     proxy: Proxy | None
-    invite_code: int | None
+    invite_code: str | None
     user_info: UserInfo | None
     auth_tokens: dict[str: str]  # {app_name: auth_token}
 
@@ -38,7 +39,7 @@ class TaskonAccount:
             *,
             number: int = None,
             proxy: Proxy = None,
-            invite_code: int = None,
+            invite_code: str = None,
             csv_filepath: Path = None,
     ):
         self.wallet = wallet
@@ -91,6 +92,9 @@ class TaskonAccount:
             "(auto) Discord username": self.discord_username,
             "(auto) Twitter username": self.twitter_username,
         }
+        if self.user_info is not None:
+            new_data["(auto) Invite code"] = self.user_info.invite_code
+
         for col in df.columns:
             if col in new_data:
                 if new_data[col] is not None:
@@ -125,7 +129,7 @@ class TaskonAccount:
             if proxy: account.proxy = Proxy.from_str(proxy)
 
             invite_code = row.get("(optional) Invite code")
-            account.invite_code = int(invite_code) if invite_code else CONFIG.DEFAULT_INVITE_CODE
+            account.invite_code = invite_code or CONFIG.DEFAULT_INVITE_CODE
 
             discord_token = row.get("(optional) Discord token")
             if discord_token:
@@ -163,10 +167,19 @@ class TaskonAccount:
             if self.is_default_invite_code:
                 info += " (default)"
 
+            if self.user_info:
+                info += f"\n\tInvite code (of this account): {self.user_info.invite_code}"
+
         if self.discord_username:
-            info += f"\n\tBinded discord: @{self.discord_username}"
+            if CONFIG.HIDE_SECRETS:
+                info += f"\n\tDiscord is binded"
+            else:
+                info += f"\n\tBinded discord: @{self.discord_username}"
         if self.twitter_username:
-            info += f"\n\tBinded twitter: @{self.twitter_username}"
+            if CONFIG.HIDE_SECRETS:
+                info += f"\n\tTwitter is binded"
+            else:
+                info += f"\n\tBinded twitter: @{self.twitter_username}"
 
         if CONFIG.HIDE_SECRETS:
             service_names = ', '.join(self.auth_tokens.keys())

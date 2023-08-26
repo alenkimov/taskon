@@ -2,6 +2,7 @@ import asyncio
 from typing import Callable
 
 import questionary
+from better_automation.utils import load_toml
 
 from bot.author import TG_LINK
 from bot.input import select_accounts_csv
@@ -12,7 +13,12 @@ from bot.scripts.campaign import enter_campaign
 from bot.taskon.account import TaskonAccount
 
 
+PROJECT_INFO = load_toml('pyproject.toml')
+PROJECT_VERSION = PROJECT_INFO['tool']['poetry']['version']
+
+
 async def main():
+    print(f'VERSION v{PROJECT_VERSION}')
     accounts_csv = await select_accounts_csv()
     accounts = TaskonAccount.from_csv(accounts_csv)
 
@@ -32,6 +38,7 @@ async def main():
         return modules[module_name]
 
     while True:
+        print(f'VERSION v{PROJECT_VERSION}')
         print(f'Telegram: {TG_LINK}')
         module = await select_module()
         await module(accounts)

@@ -72,9 +72,9 @@ async def _process_accounts_with_session(
     async with aiohttp.ClientSession(connector=connector) as session:
         accounts_len = len(list(accounts))
         for account in accounts:
+            await process_account_with_session(session, account, fn, ignore_errors)
             if accounts_len > 1:
                 await sleep(account, randrange(*CONFIG.DELAY_RANGE), logging_level="INFO")
-            await process_account_with_session(session, account, fn, ignore_errors)
 
 
 async def process_accounts_with_session(

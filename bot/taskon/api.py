@@ -114,7 +114,7 @@ class TaskonAPI(BetterHTTPClient):
             signature: str,
             nonce: str,
             timestamp: int,
-            invite_code: int = None,
+            invite_code: str = None,
     ) -> str:
         url = 'https://api.taskon.xyz/v1/submitChallenge'
         did = address.replace('0x', 'did:etho:')
@@ -130,7 +130,7 @@ class TaskonAPI(BetterHTTPClient):
                 "value": signature
             },
             "VPs": [],
-            'invite_code': str(invite_code) if invite_code else '',
+            'invite_code': invite_code if invite_code else '',
         }
         response = await self.request('POST', url, json=payload)
         result = await self.handle_response(response)
