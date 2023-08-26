@@ -62,31 +62,34 @@ async def _enter_campaign_by_account(
     async with authenticated_taskon(session, account) as taskon:
         user_campaign_status = await _request_user_campaign_status(
             taskon, account, campaign_id, logging_level="DEBUG")
-        for i, (task_info, user_task_status) in enumerate(zip(campaign_info.tasks, user_campaign_status.task_status_details), start=1):
-            log_message = f"{account} (task_number={i})"
-            if not user_task_status.is_submitter:
-                solver = TEMPLATE_ID_TO_TASK_SOLVER[task_info.template_id]
+        if not all((user_task_status.is_submitter for user_task_status
+                   in user_campaign_status.task_status_details)):
+            for i, (task_info, user_task_status) in enumerate(zip(campaign_info.tasks, user_campaign_status.task_status_details), start=1):
+                log_message = f"{account} (task_number={i})"
+                if not user_task_status.is_submitter:
+                    solver = TEMPLATE_ID_TO_TASK_SOLVER[task_info.template_id]
 
-                if solver.twitter_is_required and not account.twitter_username:
-                    logger.warning(f"{log_message} You need to bind a Twitter account before solving this task")
-                    return
+                    if solver.twitter_is_required and not account.twitter_username:
+                        logger.warning(f"{log_message} You need to bind a Twitter account before solving this task")
+                        return
 
-                if solver.discord_is_required and not account.discord_username:
-                    logger.warning(f"{log_message} You need to bind a Discord account before solving this task")
-                    return
+                    if solver.discord_is_required and not account.discord_username:
+                        logger.warning(f"{log_message} You need to bind a Discord account before solving this task")
+                        return
 
-                await solver.solve(session, taskon, account, task_info)
-                task_is_completed = await taskon.submit_task(task_info.id)
+                    await solver.solve(session, taskon, account, task_info)
+                    task_is_completed = await taskon.submit_task(task_info.id)
 
-                if task_is_completed:
-                    logger.success(f"{log_message} Task completed!")
+                    if task_is_completed:
+                        logger.success(f"{log_message} Task completed!")
+                    else:
+                        logger.warning(f"{log_message} Failed to complete the task!")
                 else:
-                    logger.warning(f"{log_message} Failed to complete the task!")
-            else:
-                logger.info(f"{log_message} Task is already completed")
+                    logger.info(f"{log_message} Task is already completed")
 
-        user_campaign_status = await _request_user_campaign_status(
-            taskon, account, campaign_id, logging_level="DEBUG")
+            user_campaign_status = await _request_user_campaign_status(
+                taskon, account, campaign_id, logging_level="DEBUG")
+
         if all((user_task_status.is_submitter for user_task_status
                 in user_campaign_status.task_status_details)):
             g_captcha_response = None
@@ -120,9 +123,9 @@ async def _enter_campaign(accounts: Iterable[TaskonAccount], campaign_id: int):
             for reward in campaign_info.winner_rewards:
                 reward_params = reward.reward_params
                 if reward.reward_type == "Token":
-                    print(f"<{reward_params.chain}> Total: {reward_params.total_amount} {reward_params.token_name}")
-                else:
-                    print(f"{reward.reward_type}")
+                    print(f"<{reward_params['chain']}> Total: {reward_params['total_amount']} {reward_params['token_name']}")
+                elif reward.reward_type == "Cap":
+                    print(f"<{reward_params['chain']}> {reward_params['collection_name']}")
 
             print("\nTasks:")
             for task in campaign_info.tasks:

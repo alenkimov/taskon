@@ -85,20 +85,9 @@ class QualifierReward(BaseModel):
     reward_desc: str
 
 
-class RewardParams1(BaseModel):
-    chain: str
-    token_type: str
-    token_id: int
-    token_address: str
-    token_name: str
-    total_amount: str
-    per_amount: str
-    is_usdt_equal_amount: bool
-
-
 class WinnerReward(BaseModel):
     reward_type: str
-    reward_params: RewardParams1
+    reward_params: dict
     reward_distribute_type: str
     reward_distributed_by_type: str
     reward_desc: str

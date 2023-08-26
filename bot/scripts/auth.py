@@ -29,8 +29,7 @@ async def _auth_taskon(taskon: TaskonAPI, account: TaskonAccount, *, logging_lev
         signature = account.wallet.sign_message(to_json(message))
         account.auth_tokens['taskon'] = await taskon.request_auth_token(
             account.wallet.address, signature, nonce, timestamp, invite_code=account.invite_code)
-        logger.log(logging_level, f"{account} Auth token obtained: {account.auth_tokens['taskon']}")
-        logger.log(logging_level, f"{account} User invited by invite code: {account.invite_code}")
+        logger.log(logging_level, f"{account} Auth token obtained. User invited by invite code: {account.invite_code}")
         account.save_to_csv()
     taskon.set_auth_token(account.auth_tokens["taskon"])
 

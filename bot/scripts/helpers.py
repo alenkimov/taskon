@@ -1,5 +1,6 @@
 import asyncio
 from typing import Iterable, Callable
+from random import randrange
 
 import aiohttp
 from aiohttp_socks import ProxyConnector
@@ -69,7 +70,10 @@ async def _process_accounts_with_session(
 ):
     connector = ProxyConnector.from_url(proxy) if proxy else aiohttp.TCPConnector()
     async with aiohttp.ClientSession(connector=connector) as session:
+        accounts_len = len(list(accounts))
         for account in accounts:
+            if accounts_len > 1:
+                await sleep(account, randrange(*CONFIG.DELAY_RANGE), logging_level="INFO")
             await process_account_with_session(session, account, fn, ignore_errors)
 
 
