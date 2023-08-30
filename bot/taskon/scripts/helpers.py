@@ -78,7 +78,7 @@ async def _process_accounts_with_session(
         accounts_len = len(list(accounts))
         for account in accounts:
             await process_account_with_session(session, account, fn, ignore_errors)
-            if accounts_len > 1:
+            if accounts_len > 1 and sum(CONFIG.DELAY_RANGE) > 0:
                 await sleep(account, randrange(*CONFIG.DELAY_RANGE), logging_level="INFO")
 
 
