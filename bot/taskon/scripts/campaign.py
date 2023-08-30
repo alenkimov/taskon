@@ -6,14 +6,15 @@ from bot.logger import LoggingLevel
 from bot.logger import logger
 from bot.taskon import TaskonAccount, TaskonAPI
 from bot.taskon.models import CampaignInfo, CampaignStatusInfo, UserCampaignStatus
+from better_automation.anticaptcha import AnticaptchaClient
 from .auth import authenticated_taskon
 from bot.utils import convert_to_human_readable
-from bot.scripts.bind import discords_are_binded, twitters_are_binded
+from .bind import discords_are_binded, twitters_are_binded
 from better_automation.utils import curry_async
 from .helpers import process_accounts_with_session
 from bot.questions import ask_int
 from .task import TEMPLATE_ID_TO_TASK_SOLVER
-from bot.anticaptcha import solve_recaptcha_v2
+from bot.config import CONFIG
 
 
 SITE_KEY = "6LceulwgAAAAANtqJ7oIASNtNhTa2qMz-2z_m6VJ"
@@ -56,6 +57,8 @@ async def _request_user_campaign_status(
 async def _enter_campaign_by_account(
         session: aiohttp.ClientSession,
         account: TaskonAccount,
+        *,
+        anticaptcha: AnticaptchaClient,
         campaign_info: CampaignInfo,
 ):
     campaign_id = campaign_info.id
@@ -95,25 +98,38 @@ async def _enter_campaign_by_account(
             g_captcha_response = None
             if campaign_info.recaptcha:
                 url = f'https://taskon.xyz/campaign/detail/{campaign_id}'
-                g_captcha_response = await solve_recaptcha_v2(account, url, SITE_KEY)
+                g_captcha_response = await anticaptcha.recaptcha_v2_with_proxy(
+                    url,
+                    SITE_KEY,
+                    is_invisible=True,
+                    proxy=account.proxy.as_url,
+                    useragent=account.useragent,
+                )
             campaign_is_submitted = await taskon.submit_campaign(campaign_id, g_captcha_response)
             if campaign_is_submitted:
                 logger.success(f"{account} (campaign_id={campaign_id}) Campaign submited!")
             else:
                 logger.warning(f"{account} (campaign_id={campaign_id}) Failed to submit campaign."
-                               f"Some of tasks aren't completed")
+                               f" Some of tasks aren't completed")
             return campaign_is_submitted
 
-@discords_are_binded
-@twitters_are_binded
+
 async def _enter_campaign(accounts: Iterable[TaskonAccount], campaign_id: int):
     async with aiohttp.ClientSession() as session:
+        anticaptcha = AnticaptchaClient(session, CONFIG.ANTICAPTCHA_API_KEY)
         async with authenticated_taskon(session) as taskon:
             campaign_info = await _request_campaign_info(taskon, campaign_id)
-            # campaign_status_info = await _request_campaign_status_info(taskon, campaign_id)
+            log_info = f"(campaign_id={campaign_id})"
 
-            print(f"(campaign_id={campaign_id}) {campaign_info.name}")
-            if campaign_info.recaptcha: print(f"ATTENTION! ReCaptcha solving required!")
+            if campaign_info.is_end:
+                logger.warning(f"{log_info} The campaign is already over")
+                return
+
+            print(f"{log_info} {campaign_info.name}")
+            if campaign_info.recaptcha:
+                print(f"ATTENTION! ReCaptcha solving required!")
+                balance = await anticaptcha.request_balance()
+                print(f"Anticaptcha balance: ${balance}")
             start_time = convert_to_human_readable(campaign_info.start_time)
             end_time = convert_to_human_readable(campaign_info.end_time)
             print(f"Duration: {start_time} - {end_time}")
@@ -131,10 +147,13 @@ async def _enter_campaign(accounts: Iterable[TaskonAccount], campaign_id: int):
             for task in campaign_info.tasks:
                 print(f"{task.template_id}: {task.params}")
 
-    enter_campaign_campaign_info = await curry_async(_enter_campaign_by_account)(campaign_info=campaign_info)
-    await process_accounts_with_session(accounts, enter_campaign_campaign_info)
+    enter_campaign_by_account = await curry_async(_enter_campaign_by_account)(
+        anticaptcha=anticaptcha, campaign_info=campaign_info)
+    await process_accounts_with_session(accounts, enter_campaign_by_account)
 
 
-async def enter_campaign(accounts):
+@discords_are_binded
+@twitters_are_binded
+async def enter_campaign(accounts: list[TaskonAccount]):
     campaign_id = await ask_int("Enter campaign id (int)", min=0)
     await _enter_campaign(accounts, campaign_id)

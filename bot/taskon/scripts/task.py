@@ -1,12 +1,14 @@
+import json
 from typing import Callable
 
 import aiohttp
-import json
+from better_automation.twitter.errors import HTTPException
+
 from bot.logger import logger
-from bot.scripts.user import _request_and_set_user_info
 from bot.taskon import TaskonAccount, TaskonAPI
 from bot.taskon.models import TaskInfo
-from bot.scripts.auth import authenticated_twitter
+from .auth import authenticated_twitter
+from .user import _request_and_set_user_info
 
 
 async def follow_twitter(
@@ -42,7 +44,13 @@ async def retweet_tweet(
         tweet_id = task_params["tweet_id"]
         retweet_of = task_params["retweet_of"]
         project_name = task_params["project_name"]
-        await twitter.repost(tweet_id)
+        try:
+            await twitter.repost(tweet_id)
+        except HTTPException as e:
+            if 327 in e.api_codes:
+                pass
+            else:
+                raise
         logger.debug(f"{account} (tweet_id={tweet_id}) Retweeted tweet of user @{retweet_of}")
 
 
@@ -58,7 +66,13 @@ async def quote_tweet_with_friends_tags(
         twitter_handle = task_params["twitter_handle"]
         text = " ".join(["@elonmusk" for _ in range(friends_count)])
         tweet_url = f'https://twitter.com/{twitter_handle}/status/{tweet_id}'
-        await twitter.quote(tweet_url, text)
+        try:
+            await twitter.quote(tweet_url, text)
+        except HTTPException as e:
+            if 327 in e.api_codes:
+                pass
+            else:
+                raise
         logger.debug(f"{account} (tweet_id={tweet_id}) Quoted tweet of user @{twitter_handle} with text: '{text}'")
 
 
@@ -73,7 +87,13 @@ async def quote_tweet_with_hashtags(
         hashtags = task_params["hash_tag"]
         text = " ".join([f"#{hashtag}" for hashtag in hashtags.split(',')])
         tweet_url = f'https://twitter.com/{twitter_handle}/status/{tweet_id}'
-        await twitter.quote(tweet_url, text)
+        try:
+            await twitter.quote(tweet_url, text)
+        except HTTPException as e:
+            if 327 in e.api_codes:
+                pass
+            else:
+                raise
         logger.debug(f"{account} (tweet_id={tweet_id}) Quoted tweet of user @{twitter_handle} with text: '{text}'")
 
 

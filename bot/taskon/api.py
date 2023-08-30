@@ -1,11 +1,10 @@
 from functools import wraps
 from typing import Any
 
-from better_automation import BetterHTTPClient
 import aiohttp
+from better_automation import BetterHTTPClient
 
-from .models import UserInfo, CampaignInfo, CampaignStatusInfo, UserCampaignStatus
-
+from .models import UserInfo, CampaignInfo, CampaignStatusInfo, UserCampaignStatus, WinnerInfo
 
 TWITTER_BIND_INFO = {
     'response_type': 'code',
@@ -25,7 +24,10 @@ DISCORD_BIND_INFO = {
 
 
 class TaskonError(Exception):
-    pass
+    def __init__(self, response_json: dict):
+        self.code = response_json["code"]
+        self.message = response_json["message"]
+        super().__init__(f"(code={self.code}) {self.message}")
 
 
 class TaskonAPI(BetterHTTPClient):
@@ -96,6 +98,21 @@ class TaskonAPI(BetterHTTPClient):
         response = await self.request('POST', url, data=data)
         result = await self.handle_response(response)
         return result["result"]
+
+    async def request_campaign_winners(
+            self,
+            campaign_id: int,
+            page: int = 0,
+            size: int = 50,
+    ) -> list[WinnerInfo]:
+        url = "https://api.taskon.xyz/v1/getCampaignWinners"
+        payload = {
+            "id": campaign_id,
+            "page": {"page_no": page, "size": size},
+        }
+        response = await self.request('POST', url, json=payload)
+        result = await self.handle_response(response)
+        return [WinnerInfo(**winner_info) for winner_info in result["data"]] if result["data"] else []
 
     async def request_nonce(self) -> str:
         url = 'https://api.taskon.xyz/v1/requestChallenge'

@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Sns(BaseModel):
@@ -165,3 +165,11 @@ class UserCampaignStatus(BaseModel):
     campaign_eligible_details: Any
     winner_rewards: Any
     qualifier_rewards: Any
+
+
+class WinnerInfo(BaseModel):
+    user_id: int
+    user_address: str
+    user_name: str
+    avatar: str
+    amount: str
