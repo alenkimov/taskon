@@ -12,6 +12,7 @@ from bot.taskon.scripts.auth import auth_taskon_accounts
 from bot.taskon.scripts.campaign import enter_campaign
 from bot.taskon.account import TaskonAccount
 from bot.taskon.scripts.check_winners import check_winners
+from bot.taskon.scripts.mint import claim_caps
 
 
 PROJECT_INFO = load_toml('pyproject.toml')
@@ -33,6 +34,7 @@ async def main():
         'Bind Twitters': bind_twitters,
         'Enter campaign': enter_campaign,
         'Check winners': check_winners,
+        'Claim CAPs': claim_caps,
     }
 
     async def select_module() -> Callable:

@@ -4,7 +4,7 @@ from typing import Any
 import aiohttp
 from better_automation import BetterHTTPClient
 
-from .models import UserInfo, CampaignInfo, CampaignStatusInfo, UserCampaignStatus, WinnerInfo
+from .models import UserInfo, CampaignInfo, CampaignStatusInfo, UserCampaignStatus, WinnerInfo, MintData
 
 TWITTER_BIND_INFO = {
     'response_type': 'code',
@@ -51,7 +51,7 @@ class TaskonAPI(BetterHTTPClient):
         @wraps(coro)
         async def wrapper(self, *args, **kwargs):
             if not self.auth_token:
-                raise TaskonError("auth_token is required for this request")
+                raise ValueError("auth_token is required for this request")
             return await coro(self, *args, **kwargs)
 
         return wrapper
@@ -113,6 +113,16 @@ class TaskonAPI(BetterHTTPClient):
         response = await self.request('POST', url, json=payload)
         result = await self.handle_response(response)
         return [WinnerInfo(**winner_info) for winner_info in result["data"]] if result["data"] else []
+
+    async def request_mint_data(self, taskon_chain_name: str, campaign_id: int) -> MintData:
+        url = "https://api.taskon.xyz/v1/claimCampaignRewardNft"
+        payload = {
+            "chain": taskon_chain_name,
+            "campaign_id": campaign_id,
+        }
+        response = await self.request('POST', url, json=payload)
+        result = await self.handle_response(response)
+        return MintData(**result)
 
     async def request_nonce(self) -> str:
         url = 'https://api.taskon.xyz/v1/requestChallenge'

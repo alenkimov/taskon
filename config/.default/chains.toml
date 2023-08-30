@@ -1,0 +1,17 @@
+[56]
+name = "BSC"
+rpc = "https://rpc.ankr.com/bsc"
+explorer_url = "https://bscscan.com"
+symbol = "BNB"
+minimal_balance = 0.00016  # ether
+gas_price = 1  # gwei
+use_eip1559 = false
+batch_request_size = 10
+
+[137]
+name = "Polygon"
+rpc = "https://rpc.ankr.com/polygon"
+explorer_url = "https://polygonscan.com"
+symbol = "MATIC"
+minimal_balance = 0.04  # ether
+batch_request_size = 10

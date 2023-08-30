@@ -173,3 +173,12 @@ class WinnerInfo(BaseModel):
     user_name: str
     avatar: str
     amount: str
+
+
+class MintData(BaseModel):
+    hash: str
+    token_uri: str
+    signature: str
+    campaign_id: int
+    contract_address: str
+    total: int

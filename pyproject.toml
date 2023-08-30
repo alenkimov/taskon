@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "taskon"
-version = "0.4.0"
+version = "0.5.0"
 description = ""
 authors = ["Alen <alen.kimov@gmail.com>"]
 readme = "README.md"
@@ -11,7 +11,7 @@ questionary = "^2.0.0"
 tqdm = "^4.66.1"
 loguru = "^0.7.0"
 pydantic = "^2.2.1"
-better-web3 = "^3.0.2"
+better-web3 = "^3.0.5"
 better-automation = "^0.4.2"
 better-proxy = "^0.2.0"
 pandas = "^2.0.3"

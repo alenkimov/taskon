@@ -6,7 +6,9 @@ import numpy as np
 import pandas as pd
 import pyuseragents
 from better_proxy import Proxy
-from better_web3 import Wallet
+from better_web3 import Wallet, Chain
+from web3.types import TxReceipt, HexStr, Wei
+from eth_utils import from_wei
 
 from bot.config import CONFIG
 from bot.logger import logger
@@ -189,3 +191,18 @@ class TaskonAccount:
                 info += f'\n\tAuth token ({service_name}): {auth_token}'
 
         return info
+
+    def tx_hash(self, chain: Chain, tx_hash: HexStr | str, value: Wei | int = None) -> str:
+        tx_hash_link = chain.get_link_by_tx_hash(tx_hash)
+        message = f"{self} {chain} {tx_hash_link}"
+        if value is not None:
+            message += f"\n\tSent: {from_wei(value, 'ether')} {chain.token.symbol}"
+        return message
+
+    def tx_receipt(self, chain: Chain, tx_receipt: TxReceipt | str, value: Wei | int = None) -> str:
+        tx_hash = tx_receipt.transactionHash.hex()
+        message = self.tx_hash(chain, tx_hash, value)
+        tx_fee_wei = tx_receipt.gasUsed * tx_receipt.effectiveGasPrice
+        tx_fee = from_wei(tx_fee_wei, "ether")
+        message += f"\n\tFee: {tx_fee} {chain.token.symbol}"
+        return message

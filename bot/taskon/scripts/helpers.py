@@ -1,11 +1,16 @@
 import asyncio
-from typing import Iterable, Callable
 from random import randrange
+from typing import Iterable, Callable
 
 import aiohttp
 from aiohttp_socks import ProxyConnector
-from better_proxy import Proxy
 from better_automation.process import bounded_gather
+from better_proxy import Proxy
+from better_web3 import Chain
+from better_web3 import Wallet
+from eth_typing import HexStr
+from web3.contract.async_contract import AsyncContractFunction
+from web3.types import Wei
 
 from bot.config import CONFIG
 from bot.logger import logger, LoggingLevel
@@ -91,3 +96,22 @@ async def process_accounts_with_session(
              for accounts in proxy_to_accounts.values()]
     max_tasks = max_tasks or CONFIG.MAX_TASKS
     await bounded_gather(tasks, max_tasks)
+
+
+async def execute_fn(
+        chain: Chain,
+        account: TaskonAccount,
+        fn: AsyncContractFunction,
+        *,
+        value: Wei | int = None,
+        wait_for_tx_receipt: bool = False,
+        logging_level: LoggingLevel = "DEBUG",
+) -> HexStr:
+    wallet = account.wallet
+    tx_hash = await chain.execute_fn(wallet.account, fn, value=value)
+    if wait_for_tx_receipt:
+        tx_receipt = await chain.wait_for_tx_receipt(tx_hash)
+        logger.log(logging_level, account.tx_receipt(chain, tx_receipt, value))
+    else:
+        logger.log(logging_level, account.tx_hash(chain, tx_hash, value))
+    return tx_hash

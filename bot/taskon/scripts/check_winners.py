@@ -34,10 +34,6 @@ async def _check_winners(accounts: Iterable[TaskonAccount], campaign_id: int):
             campaign_info = await _request_campaign_info(taskon, campaign_id)
             log_info = f"(campaign_id={campaign_id})"
 
-            if not campaign_info.is_end:
-                logger.warning(f"{log_info} The campaign isn't over yet")
-                return
-
             winners = await _request_campaign_winners(taskon, campaign_info)
             winner_addresses = {winner.user_address for winner in winners} & {account.wallet.address for account in accounts}
 
